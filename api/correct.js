@@ -1,12 +1,11 @@
 export default async function handler(req, res) {
-    // 只允许 POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { essay } = req.body;
+    const { essay, mode = 'correct' } = req.body;
     if (!essay || essay.trim().length === 0) {
-        return res.status(400).json({ error: '作文内容不能为空' });
+        return res.status(400).json({ error: '内容不能为空' });
     }
 
     const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -15,7 +14,9 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: '服务端配置错误' });
     }
 
-    const prompt = `你是一位四六级英语作文批改专家。请对以下学生作文进行批改，输出格式如下：
+    let prompt = '';
+    if (mode === 'correct') {
+        prompt = `你是一位四六级英语作文批改专家。请对以下学生作文进行批改，输出格式如下：
 
 【语法/拼写错误】
 - 错误原文：xxx → 正确写法：xxx （逐条列出）
@@ -23,7 +24,6 @@ export default async function handler(req, res) {
 
 【词汇升级建议】
 - 建议将“xxx”替换为“yyy” （至少给出2条）
-- 如果已经很好，可写“词汇使用较好，无升级建议”。
 
 【整体评分】xx分（百分制），并给出一句简短的评语。
 
@@ -33,6 +33,32 @@ export default async function handler(req, res) {
 ${essay}
 
 请严格按照上述格式输出，不要额外内容。`;
+    } 
+    else if (mode === 'guide') {
+        prompt = `你是大学英语四级作文辅导专家。用户将给出作文题目，请按以下结构输出：
+
+1. 【题目分析】用中文解释题目要求，关键词，写作方向。
+2. 【高分结构】给出最简单实用的三段式模板（开头、中间、结尾各写什么）。
+3. 【亮眼句型】提供3个简单但让阅卷老师眼前一亮的句型（可套用任何题目），每个句型附中文解释。
+4. 【避坑提醒】列出2个最常犯的低级错误（比如主谓一致、时态混乱）。
+
+用户题目：${essay}
+
+输出请用中文，语言简洁直接，不要废话。`;
+    } 
+    else if (mode === 'translate') {
+        prompt = `你是四级翻译专家。用户输入中文句子，请输出：
+1. 【英文翻译】
+2. 【解析】为什么这么翻译，重点词汇或句型说明。
+3. 【升级版】一个更高级或更地道的表达方式（可选）。
+
+中文句子：${essay}
+
+输出格式要清晰，请用中文解释。`;
+    } 
+    else {
+        return res.status(400).json({ error: '无效的模式' });
+    }
 
     try {
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -45,7 +71,7 @@ ${essay}
                 model: 'deepseek-chat',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.5,
-                max_tokens: 1000
+                max_tokens: 1200
             })
         });
 

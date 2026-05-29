@@ -3,153 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>四六级作文批改助手</title>
+    <title>四级作文翻译助手</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #f0f7ff;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            padding: 1rem;
-            color: #1e2a3a;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
-        }
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .sub {
-            color: #5a6e85;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            border-left: 3px solid #0077ff;
-            padding-left: 0.75rem;
-        }
-        textarea {
-            width: 100%;
-            padding: 1rem;
-            font-size: 1rem;
-            border: 1px solid #cbdde9;
-            border-radius: 1rem;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 200px;
-        }
-        button {
-            background: #0077ff;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 2rem;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 0.8rem;
-            width: 100%;
-        }
-        button:disabled {
-            background: #b0c4de;
-            cursor: not-allowed;
-        }
-        .result {
-            background: #f8fafc;
-            border-radius: 1rem;
-            padding: 1.2rem;
-            white-space: pre-wrap;
-            line-height: 1.5;
-        }
-        .donate {
-            text-align: center;
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #fff7e5;
-            border-radius: 1rem;
-        }
-        .donate img {
-            max-width: 180px;
-            margin-top: 0.5rem;
-            border-radius: 0.5rem;
-        }
-        footer {
-            text-align: center;
-            font-size: 0.7rem;
-            color: #8ba0b5;
-            margin-top: 2rem;
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #e2e8f0;
-            border-top-color: #0077ff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f0f7ff; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 1rem; color: #1e2a3a; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .sub { color: #5a6e85; font-size: 0.9rem; margin-bottom: 1rem; border-left: 3px solid #0077ff; padding-left: 0.75rem; }
+        .mode-buttons { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .mode-btn { background: #eef2f6; border: none; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+        .mode-btn.active { background: #0077ff; color: white; }
+        textarea { width: 100%; padding: 1rem; font-size: 1rem; border: 1px solid #cbdde9; border-radius: 1rem; font-family: inherit; resize: vertical; min-height: 150px; }
+        button { background: #0077ff; color: white; border: none; padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 2rem; font-weight: 500; cursor: pointer; margin-top: 0.8rem; width: 100%; }
+        button:disabled { background: #b0c4de; cursor: not-allowed; }
+        .result { background: #f8fafc; border-radius: 1rem; padding: 1.2rem; white-space: pre-wrap; line-height: 1.5; }
+        .donate { text-align: center; margin-top: 1rem; padding: 1rem; background: #fff7e5; border-radius: 1rem; }
+        .donate img { max-width: 180px; margin-top: 0.5rem; border-radius: 0.5rem; }
+        footer { text-align: center; font-size: 0.7rem; color: #8ba0b5; margin-top: 2rem; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #0077ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .input-label { font-weight: 500; margin-bottom: 0.5rem; color: #1e2a3a; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="card">
-        <h1>✍️ 四六级作文批改助手</h1>
-        <div class="sub">完全免费 · AI 帮你找语法错误 · 词汇升级 · 评分</div>
-        <textarea id="essayInput" placeholder="粘贴你的英文作文..."></textarea>
-        <button id="submitBtn">开始批改</button>
+        <h1>✍️ 四级作文·翻译助手</h1>
+        <div class="sub">批改 · 指导 · 翻译 | 完全免费</div>
+
+        <!-- 模式切换 -->
+        <div class="mode-buttons">
+            <button class="mode-btn active" data-mode="correct">📝 作文批改</button>
+            <button class="mode-btn" data-mode="guide">🎯 作文指导</button>
+            <button class="mode-btn" data-mode="translate">🌍 翻译练习</button>
+        </div>
+
+        <!-- 动态输入区 -->
+        <div id="inputArea">
+            <div class="input-label" id="inputLabel">✏️ 粘贴你的英文作文</div>
+            <textarea id="essayInput" placeholder="粘贴你的英文作文..."></textarea>
+        </div>
+        <button id="submitBtn">开始处理</button>
     </div>
 
     <div class="card" id="resultCard" style="display: none;">
-        <h2>📝 批改结果</h2>
+        <h2>📌 结果</h2>
         <div id="resultContent" class="result"></div>
     </div>
 
-    <!-- 打赏区（可选，不放图片则不会显示） -->
     <div id="donateBox" style="display: none;" class="donate">
-        <p>☕️ 如果这个工具帮到了你</p>
-        <p>请作者喝杯咖啡，鼓励我继续维护~</p>
+        <p>☕️ 如果这个工具帮到了你，请作者喝杯咖啡~</p>
         <img id="donateQr" src="" alt="收款码" style="width: 180px;">
     </div>
-    <footer>AI生成结果仅供参考，请结合自身判断。</footer>
+    <footer>AI生成内容仅供参考，结合自身判断。</footer>
 </div>
 
 <script>
+    let currentMode = "correct"; // correct, guide, translate
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const inputLabel = document.getElementById('inputLabel');
+    const textarea = document.getElementById('essayInput');
     const submitBtn = document.getElementById('submitBtn');
-    const essayInput = document.getElementById('essayInput');
     const resultCard = document.getElementById('resultCard');
     const resultContent = document.getElementById('resultContent');
     const donateBox = document.getElementById('donateBox');
 
-    // 如果你想显示打赏码，把图片URL填在这里（例如图床地址）
-    // 暂时留空则打赏区不显示
-    const DONATE_IMAGE_URL = "";  // 改成你的收款码图片链接
+    const DONATE_IMAGE_URL = ""; // 你的收款码链接
 
     if (DONATE_IMAGE_URL) {
         document.getElementById('donateQr').src = DONATE_IMAGE_URL;
         donateBox.style.display = 'block';
     }
 
-    async function callAPI(essay) {
+    // 切换模式逻辑
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = btn.getAttribute('data-mode');
+            // 改变输入框提示
+            if (currentMode === 'correct') {
+                inputLabel.innerText = '✏️ 粘贴你的英文作文';
+                textarea.placeholder = '粘贴英文作文...';
+            } else if (currentMode === 'guide') {
+                inputLabel.innerText = '📖 输入作文题目（中文或英文）';
+                textarea.placeholder = '例：写一封建议信，内容是给朋友推荐一本书。';
+            } else {
+                inputLabel.innerText = '🌐 输入中文句子，帮你翻译成英文';
+                textarea.placeholder = '例：随着互联网的发展，越来越多的人喜欢在网上购物。';
+            }
+            // 切换模式时清空之前结果
+            resultCard.style.display = 'none';
+            textarea.value = '';
+        });
+    });
+
+    async function callAPI(essay, mode) {
         const response = await fetch('/api/correct', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ essay })
+            body: JSON.stringify({ essay, mode })
         });
         if (!response.ok) {
             const error = await response.json();
@@ -160,27 +114,24 @@
     }
 
     submitBtn.addEventListener('click', async () => {
-        const essay = essayInput.value.trim();
-        if (!essay) {
-            alert('请先输入作文内容');
+        const content = textarea.value.trim();
+        if (!content) {
+            alert('请输入内容');
             return;
-        }
-        if (essay.split(/\s+/).length < 10) {
-            alert('建议字数不少于10个单词，批改效果更好');
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="loading"></span> AI批改中（约10秒）...';
+        submitBtn.innerHTML = '<span class="loading"></span> AI处理中...';
 
         try {
-            const result = await callAPI(essay);
+            const result = await callAPI(content, currentMode);
             resultContent.innerHTML = result.replace(/\n/g, '<br>');
             resultCard.style.display = 'block';
         } catch (err) {
-            alert('批改失败：' + err.message);
+            alert('处理失败：' + err.message);
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '开始批改';
+            submitBtn.innerHTML = '开始处理';
         }
     });
 </script>
