@@ -3,7 +3,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { essay, mode = 'correct' } = req.body;
+    const { essay, mode = 'correct', topic } = req.body;
     if (!essay || essay.trim().length === 0) {
         return res.status(400).json({ error: '内容不能为空' });
     }
@@ -15,8 +15,19 @@ export default async function handler(req, res) {
     }
 
     let prompt = '';
+
     if (mode === 'correct') {
-        prompt = `你是一位四六级英语作文批改专家。请对以下学生作文进行批改，输出格式如下：
+        let topicPrompt = "";
+        if (topic && topic.trim() !== "") {
+            topicPrompt = `作文题目：${topic}\n\n请首先判断学生作文是否切题（是否围绕题目要求展开），如果跑题，请明确指出并给出建议。\n\n`;
+        } else {
+            topicPrompt = "未提供作文题目，无法判断是否切题。请仅针对语法、词汇和表达给出批改。\n\n";
+        }
+        prompt = `你是一位四六级英语作文批改专家。${topicPrompt}请对以下学生作文进行批改，输出格式如下：
+
+【切题分析】（如果提供了题目）
+- 是否切题：是/否
+- 简要分析：...
 
 【语法/拼写错误】
 - 错误原文：xxx → 正确写法：xxx （逐条列出）

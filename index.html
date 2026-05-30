@@ -24,6 +24,8 @@
         .loading { display: inline-block; width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #0077ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .input-label { font-weight: 500; margin-bottom: 0.5rem; color: #1e2a3a; }
+        .warning { color: #e67e22; }
+        .error { color: #e74c3c; }
     </style>
 </head>
 <body>
@@ -42,7 +44,13 @@
         <!-- 动态输入区 -->
         <div id="inputArea">
             <div class="input-label" id="inputLabel">✏️ 粘贴你的英文作文</div>
+            <!-- 作文题目输入框（仅在批改模式显示） -->
+            <div id="topicField" style="margin-bottom: 12px; display: none;">
+                <input type="text" id="topicInput" placeholder="请输入作文题目（例如：The Importance of Exercise）" style="width: 100%; padding: 8px; border-radius: 0.8rem; border: 1px solid #cbdde9; font-size: 0.9rem;">
+            </div>
             <textarea id="essayInput" placeholder="粘贴你的英文作文..."></textarea>
+            <!-- 单词数统计 -->
+            <div id="wordCount" style="text-align: right; font-size: 0.8rem; margin-top: 4px;"></div>
         </div>
         <button id="submitBtn">开始处理</button>
     </div>
@@ -64,46 +72,96 @@
     const modeBtns = document.querySelectorAll('.mode-btn');
     const inputLabel = document.getElementById('inputLabel');
     const textarea = document.getElementById('essayInput');
+    const topicField = document.getElementById('topicField');
+    const topicInput = document.getElementById('topicInput');
+    const wordCountDiv = document.getElementById('wordCount');
     const submitBtn = document.getElementById('submitBtn');
     const resultCard = document.getElementById('resultCard');
     const resultContent = document.getElementById('resultContent');
     const donateBox = document.getElementById('donateBox');
 
-    const DONATE_IMAGE_URL = ""; // 你的收款码链接
+    const DONATE_IMAGE_URL = ""; // 你的收款码链接，可留空
 
     if (DONATE_IMAGE_URL) {
         document.getElementById('donateQr').src = DONATE_IMAGE_URL;
         donateBox.style.display = 'block';
     }
 
+    // 计算单词数（简单按空格分割）
+    function countWords(text) {
+        return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    }
+
+    // 更新单词统计显示
+    function updateWordCount() {
+        const text = textarea.value;
+        const wordCount = countWords(text);
+        if (wordCount === 0) {
+            wordCountDiv.innerHTML = '';
+            wordCountDiv.className = '';
+            return;
+        }
+        let message = `单词数: ${wordCount}`;
+        let className = '';
+        if (currentMode === 'correct') {
+            if (wordCount < 120) {
+                message += ' ⚠️ 建议至少120词';
+                className = 'warning';
+            } else if (wordCount > 180) {
+                message += ' ⚠️ 建议不超过180词';
+                className = 'warning';
+            } else {
+                message += ' ✓ 符合要求(120-180)';
+                className = '';
+            }
+        }
+        wordCountDiv.innerHTML = message;
+        wordCountDiv.className = className;
+    }
+
     // 切换模式逻辑
+    function updateModeUI() {
+        if (currentMode === 'correct') {
+            inputLabel.innerText = '✏️ 请输入作文题目和英文作文';
+            textarea.placeholder = '粘贴英文作文...';
+            topicField.style.display = 'block';
+        } else if (currentMode === 'guide') {
+            inputLabel.innerText = '📖 输入作文题目（中文或英文）';
+            textarea.placeholder = '例：写一封建议信，内容是给朋友推荐一本书。';
+            topicField.style.display = 'none';
+        } else {
+            inputLabel.innerText = '🌐 输入中文句子，帮你翻译成英文';
+            textarea.placeholder = '例：随着互联网的发展，越来越多的人喜欢在网上购物。';
+            topicField.style.display = 'none';
+        }
+        // 清空之前结果和输入
+        resultCard.style.display = 'none';
+        textarea.value = '';
+        if (topicInput) topicInput.value = '';
+        updateWordCount();
+    }
+
     modeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             modeBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentMode = btn.getAttribute('data-mode');
-            // 改变输入框提示
-            if (currentMode === 'correct') {
-                inputLabel.innerText = '✏️ 粘贴你的英文作文';
-                textarea.placeholder = '粘贴英文作文...';
-            } else if (currentMode === 'guide') {
-                inputLabel.innerText = '📖 输入作文题目（中文或英文）';
-                textarea.placeholder = '例：写一封建议信，内容是给朋友推荐一本书。';
-            } else {
-                inputLabel.innerText = '🌐 输入中文句子，帮你翻译成英文';
-                textarea.placeholder = '例：随着互联网的发展，越来越多的人喜欢在网上购物。';
-            }
-            // 切换模式时清空之前结果
-            resultCard.style.display = 'none';
-            textarea.value = '';
+            updateModeUI();
         });
     });
 
-    async function callAPI(essay, mode) {
+    // 监听作文输入，实时更新单词统计
+    textarea.addEventListener('input', updateWordCount);
+
+    async function callAPI(essay, mode, topic) {
+        let body = { essay, mode };
+        if (mode === 'correct' && topic && topic.trim() !== '') {
+            body.topic = topic.trim();
+        }
         const response = await fetch('/api/correct', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ essay, mode })
+            body: JSON.stringify(body)
         });
         if (!response.ok) {
             const error = await response.json();
@@ -119,12 +177,25 @@
             alert('请输入内容');
             return;
         }
+        // 批改模式下检查单词数（仅提醒，不阻止提交）
+        if (currentMode === 'correct') {
+            const wordCount = countWords(content);
+            if (wordCount < 120) {
+                if (!confirm(`当前单词数 ${wordCount}，建议120-180词。是否仍要提交？`)) return;
+            } else if (wordCount > 180) {
+                if (!confirm(`当前单词数 ${wordCount}，建议120-180词。是否仍要提交？`)) return;
+            }
+        }
 
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="loading"></span> AI处理中...';
 
         try {
-            const result = await callAPI(content, currentMode);
+            let topic = null;
+            if (currentMode === 'correct') {
+                topic = topicInput.value;
+            }
+            const result = await callAPI(content, currentMode, topic);
             resultContent.innerHTML = result.replace(/\n/g, '<br>');
             resultCard.style.display = 'block';
         } catch (err) {
@@ -134,6 +205,9 @@
             submitBtn.innerHTML = '开始处理';
         }
     });
+
+    // 初始化UI
+    updateModeUI();
 </script>
 </body>
 </html>
